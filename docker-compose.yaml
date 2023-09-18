@@ -5,6 +5,11 @@
 #
 version: "3.9"
 services:
+  mongo:
+    image: mongo:4.4.6
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: secret
   pre-commit:
     build:
       context: .
@@ -27,9 +32,13 @@ services:
   # This container will run successfully
   # only if all dependencies return no errors.
   test:
-    image: busybox
+    image: python:3.9-slim
+    environment:
+      TEST_MONGODB_URI: "mongodb://root:secret@mongo:27017"
     depends_on:
-      pre-commit:
-        condition: service_completed_successfully
-      super-linter:
-        condition: service_completed_successfully
+    - mongo
+    working_dir: /code
+    volumes:
+    - .:/code
+    command: >-
+      bash -c 'pip install tox && tox'

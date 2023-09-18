@@ -1,27 +1,39 @@
-# .github
+# Mongo cache for httplib2
 
-Repository for boilerplate workflows and CI for python projects.
+A mongodb cache for httplib2.
+
+## Installation
 
 ```bash
-.bandit.yaml
-.pre-commit-config.yaml
-.github
-└── workflows
+pip install httplib2_cache_mongo
 ```
 
-## Creating a new project
+## Usage
 
-The name of a new project should be descriptive and short.
-The repository name should be in [kebab-case](https://it.wikipedia.org/wiki/Kebab_case), string, e.g., `python-cookiecutter`,
-`api-onboarding`.
-Avoid CamelCase or underscores: you can use them for OOP classes or properties.
+```python
+from httplib2 import Http
+from httplib2_cache_mongo import MongoCache
+
+# Configure your cache.
+cache = MongoCache(uri='mongodb://localhost:27017', db='test', collection='cache')
+client = Http(cache=cache)
+
+# Issue a request
+url = 'http://httpbin.org/get'
+client.request(url, 'GET', headers={'cache-control': 'max-age=3600'})
+
+entry = cache.get(url)
+print(entry)
+```
 
 ## Contributing
 
 Please, see [CONTRIBUTING.md](CONTRIBUTING.md) for more details on:
 
 - using [pre-commit](CONTRIBUTING.md#pre-commit);
-- following the git flow and making good [pull requests](CONTRIBUTING.md#making-a-pr).
+- following the git flow and making good [pull requests](CONTRIBUTING.md#making-a-pr);
+- test locally using `docker-compose up test`.
+- test CI locally using [`act`](https://github.com/nektos/act)
 
 ## Using this repository
 
