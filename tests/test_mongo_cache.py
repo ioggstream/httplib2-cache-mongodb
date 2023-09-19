@@ -2,7 +2,6 @@ import email
 import email.utils
 import os
 import uuid
-from email.message import Message
 from time import sleep
 from urllib.parse import urlencode
 
@@ -13,7 +12,6 @@ from httplib2_cache_mongodb import MongoCache
 
 
 def parse_http_response(response: bytes):
-    info = Message()
     info, content = response.split(b"\r\n\r\n", 1)
     info = email.message_from_bytes(info)
     return dict(info), content
@@ -93,3 +91,17 @@ def test_mongocache_respects_no_cache(http, cache):
     cache_headers, _ = parse_http_response(entry)
     assert cache_headers["date"] != response["date"]
     assert cache_headers.get("etag") != response.get("etag")
+
+
+def test_store_json_content(http, cache):
+    cache.store_json = True
+
+    url = "https://postman-echo.com/get?foo1=bar1&foo2=bar2"
+    headers = {"cache-control": "max-age=860000"}
+    response, _ = http.request(url, "GET", headers=headers)
+    assert response.status == 200
+    entry = cache._raw_get(url)
+    assert entry is not None
+
+    assert entry["json_content"] is not None
+    assert entry["json_content"]["args"] == {"foo1": "bar1", "foo2": "bar2"}
