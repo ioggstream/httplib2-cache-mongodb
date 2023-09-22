@@ -3,6 +3,7 @@ import json
 import logging
 from datetime import datetime
 from hashlib import sha256
+from urllib.parse import urlparse
 
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
@@ -22,7 +23,8 @@ def get_json_content(value):
         if headers.get("content-type", "").startswith("application/json"):
             return json.loads(content.decode("utf-8"))
     except Exception:
-        log.exception(f"ERROR parsing content  {value=}")
+        # TODO: We'll need to log.debug this optional feature.
+        log.error(f"ERROR parsing content as json {value=}. Ignore and continue.")
         return
 
 
@@ -34,16 +36,21 @@ class MongoCache(object):
     e.g. by using a TTL index.
     """
 
-    def __init__(self, uri, database, collection, store_json=False):
+    def __init__(self, uri, database=None, collection=None, store_json=False):
+        if not collection:
+            raise ValueError("collection must be specified")
         self.id_f = lambda x: sha256(x.encode("utf-8")).hexdigest()
-        self.client = MongoClient(host=uri)
-        self.database = database
+        self.uri = urlparse(uri)
+        if not self.uri.path:
+            self.uri = self.uri._replace(path=database)
+
+        self.client = MongoClient(host=self.uri.geturl())
         self.collection = collection
         self.store_json = store_json
 
     @property
     def _default_collection(self):
-        return self.client.get_database(self.database).get_collection(self.collection)
+        return self.client.get_database().get_collection(self.collection)
 
     def _raw_get(self, key):
         return self._default_collection.find_one({"_id": self.id_f(key)})

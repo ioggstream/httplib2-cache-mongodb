@@ -34,7 +34,7 @@ services:
   test:
     image: python:3.9-slim
     environment:
-      TEST_MONGODB_URI: "mongodb://root:secret@mongo:27017"
+      TEST_MONGODB_URI: "mongodb://root:secret@mongo:27017/test-mongocache?authSource=admin&connectTimeoutMS=200&serverSelectionTimeoutMS=200&socketTimeoutMS=200"
     depends_on:
     - mongo
     working_dir: /code

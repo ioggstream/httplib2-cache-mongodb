@@ -3,7 +3,7 @@ import email.utils
 import os
 import uuid
 from time import sleep
-from urllib.parse import urlencode
+from urllib.parse import urlparse
 
 import httplib2
 import pytest
@@ -19,23 +19,14 @@ def parse_http_response(response: bytes):
 
 @pytest.fixture
 def cache():
-    failfast_params = urlencode(
-        {
-            "connectTimeoutMS": 1000,
-            "serverSelectionTimeoutMS": 1000,
-            "socketTimeoutMS": 1000,
-        }
-    )
-    uri = f'{os.environ["TEST_MONGODB_URI"]}/?{failfast_params}'
-    database_name = f"httplib2_{uuid.uuid4()}"
-    collection_name = f"cache_{uuid.uuid4()}"
+    uri = urlparse(os.environ["TEST_MONGODB_URI"])
+    collection_name = f"httplib2_cache_{uuid.uuid4()}"
     cache = MongoCache(
-        uri=uri,
-        database=database_name,
+        uri=uri.geturl(),
         collection=collection_name,
     )
     yield cache
-    cache.client.drop_database(database_name)
+    cache.client.get_database().drop_collection(collection_name)
 
 
 @pytest.fixture
