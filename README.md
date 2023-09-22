@@ -15,7 +15,7 @@ from httplib2 import Http
 from httplib2_cache_mongo import MongoCache
 
 # Configure your cache.
-cache = MongoCache(uri='mongodb://localhost:27017', db='test', collection='cache')
+cache = MongoCache(uri='mongodb://localhost:27017/cache-db', collection='cache')
 client = Http(cache=cache)
 
 # Issue a request
